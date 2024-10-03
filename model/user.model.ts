@@ -1,5 +1,8 @@
 import mongoose, { Document, Model, model, Schema } from "mongoose";
 import bcrypt from "bcryptjs"
+import dotenv from "dotenv"
+import jwt from "jsonwebtoken"
+dotenv.config()
 
 const emailParttren: RegExp = /^([a-zA-Z0-9._%-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,})$/
 
@@ -16,6 +19,9 @@ export interface IUser extends Document {
     isVarifiyed: boolean
     courses: Array<{ courseId: string }>
     commparePassword: (password: string) => Promise<boolean>
+    SignAccessToken: () => string
+    SignRefreshToken: () => string
+
 }
 
 const userSchema: Schema<IUser> = new mongoose.Schema({
@@ -36,7 +42,6 @@ const userSchema: Schema<IUser> = new mongoose.Schema({
     },
     password: {
         type: String,
-        required: [true, "please enter your password"],
         minlength: [6, "password must be at least 6 characters"],
         select: false
     },
@@ -62,17 +67,26 @@ const userSchema: Schema<IUser> = new mongoose.Schema({
 //hashpassword before saving 
 userSchema.pre<IUser>("save", async function (next) {
     if (!this.isModified('password')) {
-         next()
+        next()
     }
     this.password = await bcrypt.hash(this.password, 10);
     next()
 })
 
+userSchema.methods.SignAccessToken = function () {
+    return jwt.sign({ id: this._id }, process.env.ACCESS_TOKEN || "")
+}
+
+userSchema.methods.SignRefreshToken = function () {
+    return jwt.sign({ id: this._id }, process.env.REFRESH_TOKEN || "")
+}
+
 //compare password original password and enterpassword
-userSchema.methods.comparePassword = async function (enterdPassword:string): Promise<Boolean>{
-    return bcrypt.compare(enterdPassword,this.password)
+userSchema.methods.commparePassword = async function (enterdPassword: string): Promise<boolean> {
+    return bcrypt.compare(enterdPassword, this.password);
 }
 
 
-const usermodel: Model<IUser> = mongoose.model("User",userSchema)
+
+const usermodel: Model<IUser> = mongoose.model("User", userSchema)
 export default usermodel

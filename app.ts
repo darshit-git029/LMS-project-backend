@@ -5,6 +5,7 @@ import cors from "cors"
 import cookieParser from "cookie-parser"
 import { ErrorMiddleWare } from "./middleware/error"
 import userRouter from "./Routes/user.route"
+import courseRouter from "./Routes/course.route"
 
 dotenv.config()
 
@@ -25,6 +26,7 @@ app.get("/test",(req:Request,res:Response,next:NextFunction) => {
 })
 
 app.use("/api/v1",userRouter)
+app.use("/api/v2",courseRouter)
 
 
 app.all("*",(req:Request,res:Response,next:NextFunction) => {
