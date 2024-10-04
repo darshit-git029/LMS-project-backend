@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <title>New Replay Notification</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: #f4f4f4;
+        }
+        .email-container {
+            width: 100%;
+            max-width: 600px;
+            margin: 0 auto;
+            background-color: #ffffff;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+        }
+        h2 {
+            color: #333333;
+            font-size: 24px;
+        }
+        p {
+            font-size: 16px;
+            color: #555555;
+        }
+        .code {
+            background-color: #f0f0f0;
+            padding: 10px 20px;
+            font-size: 20px;
+            font-weight: bold;
+            color: #333333;
+            border-radius: 4px;
+            display: inline-block;
+            margin-top: 20px;
+        }
+        .button {
+            background-color: #007BFF;
+            color: #ffffff;
+            padding: 12px 24px;
+            border-radius: 5px;
+            text-decoration: none;
+            font-size: 18px;
+            margin-top: 20px;
+            display: inline-block;
+        }
+        .footer {
+            margin-top: 30px;
+            font-size: 14px;
+            color: #777777;
+        }
+    </style>
+</head>
+<body>
+    <div class="email-container">
+        <h2>Order Conformation</h2>
+        <P> <%= order._id %></P>
+        <P><%= order.name %></P>
+        <P><%= order.price %></P>
+        <P> <%= order.date %></P>
+        <P>please login to out website to view the reply and continue discussion</P>
+        <P>Thank you for being part og our community</P>
+    </div>
+</body>
+</html>

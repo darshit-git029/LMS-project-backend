@@ -16,3 +16,22 @@ export const getUserById = async (id:string,res:Response) => {
         return (new ErrorHandler(error.message,400))
     }
 }
+
+
+//get all user
+
+export const getAllUserService = CatchAsyncError(async(req:Request,res:Response,next:NextFunction) => {
+    try {
+
+        const user = await usermodel.find().sort({createdAt:-1})
+   
+        
+        res.status(200).json({
+            success:true,
+            user
+        })
+        
+    } catch (error:any) {
+        return (new ErrorHandler(error.message,400))
+    }
+})

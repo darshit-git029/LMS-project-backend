@@ -10,7 +10,7 @@ import sendMail from "../Utils/SendMail";
 import { accessTokenOption, refreshTokenOption, sendToken } from "../Utils/jwt";
 import { redis } from "../Utils/redis";
 import { json } from "stream/consumers";
-import { getUserById } from "../services/user.service";
+import { getAllUserService, getUserById } from "../services/user.service";
 import cloudeinary from "cloudinary"
 import { mkdirSync } from "fs";
 dotenv.config()
@@ -374,5 +374,19 @@ export const updateProfilePhoto = CatchAsyncError(async (req: Request, res: Resp
     } catch (error: any) {
         console.log(error.message);
         return next(new ErrorHandler(error.message, 400))
+    }
+})
+
+
+//get all user only for admin
+
+export const getAllUserAdmin = CatchAsyncError(async(req:Request,res:Response,next:NextFunction) => {
+    console.log("...user admin");
+    
+    try {
+        getAllUserService(req,res,next)
+
+    } catch (error:any) {
+        return next(new ErrorHandler(error.message,400))
     }
 })

@@ -6,6 +6,8 @@ import cookieParser from "cookie-parser"
 import { ErrorMiddleWare } from "./middleware/error"
 import userRouter from "./Routes/user.route"
 import courseRouter from "./Routes/course.route"
+import orderRouter from "./Routes/order.routes"
+import notificationRoute from "./Routes/notification.routes"
 
 dotenv.config()
 
@@ -27,7 +29,8 @@ app.get("/test",(req:Request,res:Response,next:NextFunction) => {
 
 app.use("/api/v1",userRouter)
 app.use("/api/v2",courseRouter)
-
+app.use("/api/v3",orderRouter)
+app.use("/api/v4",notificationRoute)
 
 app.all("*",(req:Request,res:Response,next:NextFunction) => {
     const error = new Error(`route ${req.originalUrl} not found`) as any
