@@ -1,6 +1,7 @@
 import  express  from "express";
 import { authoraiseRole, isAuthenticate } from "../middleware/auth";
-import { addAnswer, addQuestion, addReplyToReview, addReview, editCourse, getAllCourse, getAllCourseAdmin, getCourseByUSer, getSingleCourse, uploadCourse } from "../controller/course.controller";
+import { addAnswer, addQuestion, addReplyToReview, addReview, deleteCourse, editCourse, getAllCourse, getAllCourseAdmin, getCourseByUSer, getSingleCourse, uploadCourse } from "../controller/course.controller";
+import { isatty } from "tty";
 
 const courseRouter = express.Router()
 
@@ -24,4 +25,6 @@ courseRouter.put("/reply",isAuthenticate,authoraiseRole("admin"),addReplyToRevie
 
 //admin access
  courseRouter.get("/get/course-admin",isAuthenticate,authoraiseRole("admin"),getAllCourseAdmin)
+
+ courseRouter.delete("/delete/course/:id",isAuthenticate,authoraiseRole("admin"),deleteCourse)
 export default courseRouter;

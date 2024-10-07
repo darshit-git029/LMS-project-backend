@@ -1,5 +1,5 @@
 import  express  from "express";
-import { activateUser, registrationUser, updateAccessToken, userLogin, userLogout, getUserInfo, socialAuth, updateUser, updatePassword, updateProfilePhoto, getAllUserAdmin } from "../controller/user.controller";
+import { activateUser, registrationUser, updateAccessToken, userLogin, userLogout, getUserInfo, socialAuth, updateUser, updatePassword, updateProfilePhoto, getAllUserAdmin, updateUserRole, deleteUser } from "../controller/user.controller";
 import { authoraiseRole, isAuthenticate } from "../middleware/auth";
 
 const userRouter = express.Router()
@@ -27,5 +27,9 @@ userRouter.put("/update/profile/picture",isAuthenticate,updateProfilePhoto)
 //admin access
 
 userRouter.get("/get/user-admin",isAuthenticate,authoraiseRole("admin"),getAllUserAdmin)
+
+userRouter.put("/update-user-role",isAuthenticate,authoraiseRole("admin"),updateUserRole)
+
+userRouter.delete("/delete/user/:id",isAuthenticate,authoraiseRole("admin"),deleteUser)
 
 export default userRouter;

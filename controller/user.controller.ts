@@ -10,9 +10,10 @@ import sendMail from "../Utils/SendMail";
 import { accessTokenOption, refreshTokenOption, sendToken } from "../Utils/jwt";
 import { redis } from "../Utils/redis";
 import { json } from "stream/consumers";
-import { getAllUserService, getUserById } from "../services/user.service";
+import { getAllUserService, getUserById, updateUserRoleService } from "../services/user.service";
 import cloudeinary from "cloudinary"
 import { mkdirSync } from "fs";
+import { AsyncLocalStorage } from "async_hooks";
 dotenv.config()
 
 //register user
@@ -188,7 +189,7 @@ export const updateAccessToken = CatchAsyncError(async (req: Request, res: Respo
 
         const session = await redis.get(decoded.id as string)
         if (!session) {
-            return next(new ErrorHandler(message, 400))
+            return next(new ErrorHandler("please login to access this resources", 400))
         }
 
         const user = JSON.parse(session)
@@ -198,6 +199,8 @@ export const updateAccessToken = CatchAsyncError(async (req: Request, res: Respo
         req.user = user
         res.cookie("access_token", accessToken, accessTokenOption)
         res.cookie("refresh_token", refresh_token, refreshTokenOption)
+
+        await redis.set(user._id,JSON.stringify(user),"EX",604800) //7 days 
         res.status(200).json({
             success: true,
             accessToken
@@ -367,8 +370,8 @@ export const updateProfilePhoto = CatchAsyncError(async (req: Request, res: Resp
         await user?.save()
         await redis.set(userId, JSON.stringify(user))
         res.status(200).json({
-            success:true,
-            message:"Profile picture updated successfully.",
+            success: true,
+            message: "Profile picture updated successfully.",
             user
         })
     } catch (error: any) {
@@ -380,13 +383,55 @@ export const updateProfilePhoto = CatchAsyncError(async (req: Request, res: Resp
 
 //get all user only for admin
 
-export const getAllUserAdmin = CatchAsyncError(async(req:Request,res:Response,next:NextFunction) => {
+export const getAllUserAdmin = CatchAsyncError(async (req: Request, res: Response, next: NextFunction) => {
     console.log("...user admin");
-    
-    try {
-        getAllUserService(req,res,next)
 
-    } catch (error:any) {
-        return next(new ErrorHandler(error.message,400))
+    try {
+        getAllUserService(req, res, next)
+
+    } catch (error: any) {
+        return next(new ErrorHandler(error.message, 400))
+    }
+})
+
+
+//update user role -- admin
+
+export const updateUserRole = CatchAsyncError(async (req: Request, res: Response, next: NextFunction) => {
+    try {
+
+        const { id, role } = req.body
+        const user = await usermodel.findById(id)
+        if (!user) {
+            return next(new ErrorHandler("user not found!", 400))
+        }
+        updateUserRoleService(res, id, role)
+
+    } catch (error: any) {
+        return next(new ErrorHandler(error.message, 400))
+    }
+})
+
+//delete user -- admin
+
+export const deleteUser = CatchAsyncError(async (req: Request, res: Response, next: NextFunction) => {
+    try {
+        const { id } = req.params
+
+        const user = await usermodel.findById(id)
+        if (!user) {
+            return next(new ErrorHandler("user not found!", 400))
+        }
+
+        await user.deleteOne({ id })
+
+        await redis.del(id)
+
+        res.status(200).json({
+            success: true,
+            message: "User deleted successfully"
+        })
+    } catch (error: any) {
+        return next((new ErrorHandler(error.Message, 400)))
     }
 })

@@ -141,8 +141,8 @@ const courseSchema = new Schema<ICourse>({
     purchased: {
         type: Number,
         default: 0
-    }
-})
+    },
+},{timestamps:true})
 
 
 const courseModel: Model<ICourse> = mongoose.model("Course", courseSchema)
