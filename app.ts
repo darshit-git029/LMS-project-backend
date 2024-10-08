@@ -20,7 +20,10 @@ app.use(express.json({limit:"50mb"}))
 app.use(cookieParser())
 
 //cors
-app.use(cors({origin:process.env.ORIGIN}))
+app.use(cors({
+    origin: 'http://localhost:3000', 
+    credentials: true 
+}));
 
 app.get("/test",(req:Request,res:Response,next:NextFunction) => {
     res.status(200).json({
@@ -31,10 +34,10 @@ app.get("/test",(req:Request,res:Response,next:NextFunction) => {
 
 app.use("/api/v1",userRouter)
 app.use("/api/v1",analyticsRouter)
-app.use("/api/v2",courseRouter)
-app.use("/api/v3",orderRouter)
-app.use("/api/v4",notificationRoute)
-app.use("/api/v5",layoutRouter)
+app.use("/api/v1",courseRouter)
+app.use("/api/v1",orderRouter)
+app.use("/api/v1",notificationRoute)
+app.use("/api/v1",layoutRouter)
 
 app.all("*",(req:Request,res:Response,next:NextFunction) => {
     const error = new Error(`route ${req.originalUrl} not found`) as any

@@ -12,7 +12,7 @@ userRouter.post("/login",userLogin)
 
 userRouter.get("/logout",isAuthenticate,userLogout)
 
-userRouter.get('/refreshtoken',updateAccessToken)
+userRouter.get("/refreshtoken",updateAccessToken)
 
 userRouter.get("/me",isAuthenticate,getUserInfo)
 

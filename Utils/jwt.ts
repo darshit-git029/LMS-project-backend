@@ -30,12 +30,12 @@ interface ITokenOption {
       sameSite: "lax"
   }
 
-export const sendToken = (user: IUser, statusCode: Number, res: Response) => {
+export const sendToken = (user: IUser, statusCode: number, res: Response) => {
     const accessToken = user.SignAccessToken();
     const refreshToken = user.SignRefreshToken();
 
     //upload session in redis
-    redis.set(user._id, JSON.stringify(user) as any)
+    redis.set(user._id, JSON.stringify(user) as any )
 
   
 

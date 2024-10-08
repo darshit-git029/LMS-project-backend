@@ -194,12 +194,12 @@ export const updateAccessToken = CatchAsyncError(async (req: Request, res: Respo
 
         const user = JSON.parse(session)
 
-        const accessToken = jwt.sign({ id: user._id }, process.env.ACCESS_TOKEN as string, { expiresIn: "15" })
-        const refreshToken = jwt.sign({ id: user._id }, process.env.REFRESH_TOKEN as string, { expiresIn: "3d" })
+        const accessToken = jwt.sign({ id: user?._id }, process.env.ACCESS_TOKEN as string, { expiresIn: "15m" })
+        const refreshToken = jwt.sign({ id: user?._id }, process.env.REFRESH_TOKEN as string, { expiresIn: "3d" })
         req.user = user
         res.cookie("access_token", accessToken, accessTokenOption)
-        res.cookie("refresh_token", refresh_token, refreshTokenOption)
-
+        res.cookie("refresh_token", refreshToken, refreshTokenOption)
+        
         await redis.set(user._id,JSON.stringify(user),"EX",604800) //7 days 
         res.status(200).json({
             success: true,
@@ -221,7 +221,7 @@ export const getUserInfo = CatchAsyncError(async (req: Request, res: Response, n
         getUserById(userId, res)
     } catch (error: any) {
         console.log(error.message);
-        return next(new ErrorHandler(error.message, 400))
+        return next(new ErrorHandler("thuis is error", 400))
     }
 })
 

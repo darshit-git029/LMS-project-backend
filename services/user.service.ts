@@ -2,20 +2,20 @@ import { NextFunction, Response } from "express"
 import usermodel from "../model/user.model"
 import ErrorHandler from "../Utils/ErrorHandler";
 import { CatchAsyncError } from "../middleware/catchAsyncError";
+import { redis } from "../Utils/redis";
 
 //get user by id
 export const getUserById = async (id: string, res: Response) => {
-    try {
+    const userJson = await redis.get(id);
 
-        const user = await usermodel.findById(id)
-        res.status(200).json({
-            success: true,
-            user,
-        })
-    } catch (error: any) {
-        return (new ErrorHandler(error.message, 400))
+    if (userJson) {
+      const user = JSON.parse(userJson);
+      res.status(201).json({
+        success: true,
+        user,
+      });
     }
-}
+  };
 
 
 //get all user
