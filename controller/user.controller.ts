@@ -262,18 +262,11 @@ interface IUpdateUserInfo {
 export const updateUser = CatchAsyncError(async (req: Request, res: Response, next: NextFunction) => {
     try {
 
-        const { name, email } = req.body as IUpdateUserInfo
+        const { name } = req.body as IUpdateUserInfo
         const userId = req.user?._id
         const user = await usermodel.findById(userId)
 
-        if (email && user) {
-            const isEmailExist = await usermodel.findOne({ email })
-            if (isEmailExist) {
-                return next(new ErrorHandler("email is already exist.", 400))
-            }
-            user.email = email
-        }
-
+        
         if (name && user) {
             user.name = name
         }
