@@ -291,14 +291,14 @@ export const updateUser = CatchAsyncError(async (req: Request, res: Response, ne
 //update user password
 
 interface IUpdatePassword {
-    oldpassword: string
-    newpassword: string
+    oldPassword: string
+    newPassword: string
 }
 
 export const updatePassword = CatchAsyncError(async (req: Request, res: Response, next: NextFunction) => {
     try {
 
-        const { oldpassword, newpassword } = req.body as IUpdatePassword
+        const { oldPassword, newPassword } = req.body as IUpdatePassword
 
         const user = await usermodel.findById(req.user?._id).select("+password")
 
@@ -306,11 +306,11 @@ export const updatePassword = CatchAsyncError(async (req: Request, res: Response
             return next(new ErrorHandler("Invalid user!", 400))
 
         }
-        const isPasswordMatch = await user?.commparePassword(oldpassword)
+        const isPasswordMatch = await user?.commparePassword(oldPassword)
         if (!isPasswordMatch) {
             return next(new ErrorHandler("Invalid your old password!", 400))
         }
-        user.password = newpassword
+        user.password = newPassword
         await user?.save()
 
         await redis.set(req.user?._id, JSON.stringify(user))

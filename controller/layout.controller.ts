@@ -14,7 +14,7 @@ export const createLayout = CatchAsyncError(async (req: Request, res: Response, 
             return next(new ErrorHandler(`${type} is already exist`,400))
         }
 
-        if (type === "Banner") {
+        if (type === process.env.LAYOUT_BANNER) {
             const { image, title, subTitle } = req.body
             const myCloude = await cloudeinary.v2.uploader.upload(image, {
                 folder: "layout"
@@ -30,7 +30,7 @@ export const createLayout = CatchAsyncError(async (req: Request, res: Response, 
             await LayoutModel.create(banner)
         }
 
-        if (type === "FAQ") {
+        if (type === process.env.LAYOUT_FAQ) {
             const { faq } = req.body
             const FaqItem = await Promise.all(
                 faq.map(async(item:any) => {
@@ -40,10 +40,10 @@ export const createLayout = CatchAsyncError(async (req: Request, res: Response, 
                     }
                 })
             )
-            await LayoutModel.create({type:"FAQ",faq:FaqItem})
+            await LayoutModel.create({type:process.env.LAYOUT_FAQ,faq:FaqItem})
         }
 
-        if (type === "Categories") {
+        if (type === process.env.LAYOUT_CATEGORY) {
             const { category } = req.body
             const CategoriesItem = await Promise.all(
                 category.map(async(item:any) => {
@@ -52,7 +52,7 @@ export const createLayout = CatchAsyncError(async (req: Request, res: Response, 
                     }
                 })
             )
-            await LayoutModel.create({type:"Categories",category:CategoriesItem})
+            await LayoutModel.create({type:process.env.LAYOUT_CATEGORY,category:CategoriesItem})
         }
 
         res.status(200).json({
@@ -72,8 +72,8 @@ export const editLayout = CatchAsyncError(async(req:Request,res:Response,next:Ne
     try {
         const { type } = req.body
        
-        if (type === "Banner") {
-            const bannerData:any = await LayoutModel.findOne({type:"Banner"})
+        if (type === process.env.LAYOUT_BANNER) {
+            const bannerData:any = await LayoutModel.findOne({type:process.env.LAYOUT_BANNER})
             const { image, title, subTitle } = req.body
             if(bannerData){
                 await cloudeinary.v2.uploader.destroy(bannerData.image.public_id)
@@ -93,9 +93,9 @@ export const editLayout = CatchAsyncError(async(req:Request,res:Response,next:Ne
             await LayoutModel.findByIdAndUpdate(bannerData.id,{banner})
         }
 
-        if (type === "FAQ") {
+        if (type === process.env.LAYOUT_FAQ) {
             const { faq } = req.body
-            const faqdata = await LayoutModel.findOne({type:"FAQ"})
+            const faqdata = await LayoutModel.findOne({type:process.env.LAYOUT_FAQ})
             const FaqItem = await Promise.all(
                 faq.map(async(item:any) => {
                     return{
@@ -104,12 +104,12 @@ export const editLayout = CatchAsyncError(async(req:Request,res:Response,next:Ne
                     }
                 })
             )
-            await LayoutModel.findByIdAndUpdate(faqdata?._id,{type:"FAQ",faq:FaqItem})
+            await LayoutModel.findByIdAndUpdate(faqdata?._id,{type:process.env.LAYOUT_FAQ,faq:FaqItem})
         }
 
-        if (type === "Categories") {
+        if (type === process.env.LAYOUT_CATEGORY) {
             const { category } = req.body
-            const categorydata = await LayoutModel.findOne({type:"Categories"})
+            const categorydata = await LayoutModel.findOne({type:process.env.LAYOUT_CATEGORY})
 
             const CategoriesItem = await Promise.all(
                 category.map(async(item:any) => {
@@ -118,7 +118,7 @@ export const editLayout = CatchAsyncError(async(req:Request,res:Response,next:Ne
                     }
                 })
             )
-            await LayoutModel.findByIdAndUpdate(categorydata?._id,{type:"Categories",category:CategoriesItem})
+            await LayoutModel.findByIdAndUpdate(categorydata?._id,{type:process.env.LAYOUT_CATEGORY,category:CategoriesItem})
         }
 
         res.status(200).json({
