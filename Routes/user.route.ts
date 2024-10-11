@@ -10,26 +10,26 @@ userRouter.post("/activate-user", activateUser)
 
 userRouter.post("/login",userLogin)
 
-userRouter.get("/logout",isAuthenticate,userLogout)
+userRouter.get("/logout",updateAccessToken,isAuthenticate,userLogout)
 
 userRouter.get("/refreshtoken",updateAccessToken)
 
-userRouter.get("/me",isAuthenticate,getUserInfo)
+userRouter.get("/me",updateAccessToken,isAuthenticate,getUserInfo)
 
 userRouter.post("/socialauth",socialAuth)
 
-userRouter.put("/updateuser",isAuthenticate,updateUser)
+userRouter.put("/updateuser",updateAccessToken,isAuthenticate,updateUser)
 
-userRouter.put("/update/password",isAuthenticate,updatePassword)
+userRouter.put("/update/password",updateAccessToken,isAuthenticate,updatePassword)
 
-userRouter.put("/update/profile/picture",isAuthenticate,updateProfilePhoto)
+userRouter.put("/update/profile/picture",updateAccessToken,isAuthenticate,updateProfilePhoto)
 
 //admin access
 
-userRouter.get("/get/user-admin",isAuthenticate,authoraiseRole("admin"),getAllUserAdmin)
+userRouter.get("/get/user-admin",updateAccessToken,isAuthenticate,authoraiseRole("admin"),getAllUserAdmin)
 
-userRouter.put("/update-user-role",isAuthenticate,authoraiseRole("admin"),updateUserRole)
+userRouter.put("/update-user-role",updateAccessToken,isAuthenticate,authoraiseRole("admin"),updateUserRole)
 
-userRouter.delete("/delete/user/:id",isAuthenticate,authoraiseRole("admin"),deleteUser)
+userRouter.delete("/delete/user/:id",updateAccessToken,isAuthenticate,authoraiseRole("admin"),deleteUser)
 
 export default userRouter;
