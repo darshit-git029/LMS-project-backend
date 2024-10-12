@@ -386,20 +386,23 @@ export const getAllUserAdmin = CatchAsyncError(async (req: Request, res: Respons
 
 //update user role -- admin
 
-export const updateUserRole = CatchAsyncError(async (req: Request, res: Response, next: NextFunction) => {
+export const updateUserRole = CatchAsyncError(  async (req: Request, res: Response, next: NextFunction) => {
     try {
-
-        const { id, role } = req.body
-        const user = await usermodel.findById(id)
-        if (!user) {
-            return next(new ErrorHandler("user not found!", 400))
-        }
-        updateUserRoleService(res, id, role)
-
+      const { email, role } = req.body;
+      const isUserExist = await usermodel.findOne({ email });
+      if (isUserExist) {
+        const id = isUserExist._id;
+        updateUserRoleService(res,id, role);
+      } else {
+        res.status(400).json({
+          success: false,
+          message: "User not found",
+        });
+      }
     } catch (error: any) {
-        return next(new ErrorHandler(error.message, 400))
+      return next(new ErrorHandler(error.message, 400));
     }
-})
+  })
 
 //delete user -- admin
 

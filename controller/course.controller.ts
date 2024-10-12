@@ -1,7 +1,7 @@
 import { Request, response, NextFunction, Response } from "express";
 import { CatchAsyncError } from "../middleware/catchAsyncError";
 import ErrorHandler from "../Utils/ErrorHandler";
-import cloudeinary from "cloudinary"
+import cloudinary from "cloudinary"
 import { createCourse, getAllCourseService } from "../services/course.service";
 import courseModel from "../model/course.model";
 import { redis } from "../Utils/redis";
@@ -14,67 +14,74 @@ import axios from "axios";
 
 
 //create new course
-export const uploadCourse = CatchAsyncError(async (req: Request, res: Response, next: NextFunction) => {
-    console.log("........Create Course API.........");
-
+export const uploadCourse = CatchAsyncError(  async (req: Request, res: Response, next: NextFunction) => {
     try {
-        const data = req.body
-        const thubnail = data.thubnail
-        if (thubnail) {
-            const myCloude = cloudeinary.v2.uploader.upload(thubnail, {
-                folder: "course"
-            })
-            data.thubnail = {
-                public_id: (await myCloude).public_id
-            }
-        }
-        createCourse(data, res, next)
+      const data = req.body;
+      const thubnail = data.thubnail;
+      if (thubnail) {
+        const myCloud = await cloudinary.v2.uploader.upload(thubnail, {
+          folder: "courses",
+        });
 
+        data.thubnail = {
+          public_id: myCloud.public_id,
+          url: myCloud.secure_url,
+        };
+      }
+      createCourse(data, res, next);
     } catch (error: any) {
-        console.log(error.message);
-        return next(new ErrorHandler(error.message, 400))
+      return next(new ErrorHandler(error.message, 500));
     }
-})
+  })
 
 
-//edit existing course
+// edit course
+export const editCourse = CatchAsyncError(
+    async (req: Request, res: Response, next: NextFunction) => {
+        try {
+            const data = req.body;
 
-export const editCourse = CatchAsyncError(async (req: Request, res: Response, next: NextFunction) => {
-    console.log("........Edit Course API.........");
+            const thubnail = data.thubnail;
 
-    try {
-        const data = req.body
-        const thubnail = data.thubnail
-        if (thubnail) {
-            await cloudeinary.v2.uploader.destroy(thubnail.public_id)
+            const courseId = req.params.id;
 
-            const myCloude = await cloudeinary.v2.uploader.upload(thubnail, {
-                folder: "course"
-            })
-            data.thubnail = {
-                public_id: myCloude.public_id,
-                url: myCloude.secure_url
+            const courseData = await courseModel.findById(courseId) as any;
+
+            // Check if thubnail is a string before using startsWith
+            if (typeof thubnail === 'string' && thubnail && !thubnail.startsWith("https")) {
+                await cloudinary.v2.uploader.destroy(courseData.thubnail.public_id);
+
+                const myCloud = await cloudinary.v2.uploader.upload(thubnail, {
+                    folder: "courses",
+                });
+
+                data.thubnail = {
+                    public_id: myCloud.public_id,
+                    url: myCloud.secure_url,
+                };
             }
+
+            if (typeof thubnail === 'string' && thubnail.startsWith("https")) {
+                data.thubnail = {
+                    public_id: courseData?.thubnail.public_id,
+                    url: courseData?.thubnail.url,
+                };
+            }
+
+            const course = await courseModel.findByIdAndUpdate(courseId,{$set: data},{ new: true }
+            );
+            console.log(course);
+            
+            await redis.set(courseId, JSON.stringify(course)); // update course in redis
+            res.status(201).json({
+                success: true,
+                course,
+            });
+        } catch (error: any) {
+            return next(new ErrorHandler(error.message, 500));
         }
-
-        const courseId = req.params.id
-        const course = await courseModel.findByIdAndUpdate(courseId, {
-            $set: data
-        }, { new: true },
-        )
-
-        res.status(200).json({
-            success: true,
-            message: "Course Updated successfully.",
-            course
-        })
-
-
-    } catch (error: any) {
-        console.log(error.message);
-        return next(new ErrorHandler(error.message, 400))
     }
-})
+);
 
 //get single course without purchasing 
 export const getSingleCourse = CatchAsyncError(async (req: Request, res: Response, next: NextFunction) => {
@@ -470,10 +477,10 @@ export const generateVedioUrl = CatchAsyncError(async (req: Request, res: Respon
             }
         )
         res.json(response.data)
-        
+
     } catch (error: any) {
         console.log(error);
-        
+
         return next((new ErrorHandler(error.Message, 400)))
     }
 })

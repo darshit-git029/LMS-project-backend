@@ -7,6 +7,6 @@ const layoutRouter = express.Router()
 
 layoutRouter.post("/create/layout",updateAccessToken,isAuthenticate,authoraiseRole("admin"),createLayout)
 layoutRouter.put("/edit/layout",updateAccessToken,isAuthenticate,authoraiseRole("admin"),editLayout)
-layoutRouter.get("/get/layout",updateAccessToken,isAuthenticate,authoraiseRole("admin"),getLayoutByType)
+layoutRouter.get("/get/layout/:type",updateAccessToken,isAuthenticate,authoraiseRole("admin"),getLayoutByType)
 
 export default layoutRouter
