@@ -13,7 +13,7 @@ courseRouter.put("/edit/course/:id",updateAccessToken,isAuthenticate,authoraiseR
 
 courseRouter.get('/get/course/:id',getSingleCourse)
 
-courseRouter.get('/get/all/course/',getAllCourse)
+courseRouter.get('/get/all/course',getAllCourse)
 
 courseRouter.get('/get/course/content/:id',updateAccessToken,isAuthenticate,getCourseByUSer)
 

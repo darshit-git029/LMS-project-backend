@@ -56,8 +56,6 @@ export const registrationUser = CatchAsyncError(async (req: Request, res: Respon
                 activationToken: activationToken.token
             })
         } catch (error: any) {
-            console.log(error.message);
-
             return (new ErrorHandler(error.message, 400))
         }
 
@@ -144,7 +142,6 @@ export const userLogin = CatchAsyncError(async (req: Request, res: Response, nex
 
 
     } catch (error: any) {
-        console.log(error.message);
 
         return next(new ErrorHandler(error.message, 400))
 
@@ -155,13 +152,13 @@ export const userLogin = CatchAsyncError(async (req: Request, res: Response, nex
 
 export const userLogout = CatchAsyncError(async (req: Response, res: Response, next: NextFunction) => {
     try {
-
+        console.log("Logout query run");
+        
         res.cookie("access_token", "", { maxAge: 1 })
         res.cookie("refresh_token", "", { maxAge: 1 })
         const userId = req.user?._id;
 
-        redis.del(userId); // Ensure userId is a string
-
+        redis.del(userId); 
 
         res.status(200).json({
             success: true,
@@ -169,7 +166,6 @@ export const userLogout = CatchAsyncError(async (req: Response, res: Response, n
         })
 
     } catch (error: any) {
-        console.log(error.message);
         return next(new ErrorHandler(error.message, 400))
     }
 })
@@ -203,7 +199,6 @@ export const updateAccessToken = CatchAsyncError(async (req: Request, res: Respo
         await redis.set(user._id,JSON.stringify(user),"EX",604800) //7 days 
        next()
     } catch (error: any) {
-        console.log(error.message);
         return next(new ErrorHandler(error.message, 400))
     }
 })
@@ -216,7 +211,6 @@ export const getUserInfo = CatchAsyncError(async (req: Request, res: Response, n
         const userId = req.user?._id;
         getUserById(userId, res)
     } catch (error: any) {
-        console.log(error.message);
         return next(new ErrorHandler("thuis is error", 400))
     }
 })
@@ -243,7 +237,6 @@ export const socialAuth = CatchAsyncError(async (req: Request, res: Response, ne
         }
 
     } catch (error: any) {
-        console.log(error.message);
         return next(new ErrorHandler(error.message, 400))
     }
 })
@@ -278,7 +271,6 @@ export const updateUser = CatchAsyncError(async (req: Request, res: Response, ne
         })
 
     } catch (error: any) {
-        console.log(error.message);
         return next(new ErrorHandler(error.message, 400))
     }
 })
@@ -316,7 +308,6 @@ export const updatePassword = CatchAsyncError(async (req: Request, res: Response
             message: "Password updated successfully"
         })
     } catch (error: any) {
-        console.log(error.message);
         return next(new ErrorHandler(error.message, 400))
     }
 })
@@ -364,7 +355,6 @@ export const updateProfilePhoto = CatchAsyncError(async (req: Request, res: Resp
             user
         })
     } catch (error: any) {
-        console.log(error.message);
         return next(new ErrorHandler(error.message, 400))
     }
 })

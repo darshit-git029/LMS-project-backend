@@ -14,36 +14,39 @@ import axios from "axios";
 
 
 //create new course
-export const uploadCourse = CatchAsyncError(  async (req: Request, res: Response, next: NextFunction) => {
+export const uploadCourse = CatchAsyncError(async (req: Request, res: Response, next: NextFunction) => {
     try {
-      const data = req.body;
-      const thubnail = data.thubnail;
-      if (thubnail) {
-        const myCloud = await cloudinary.v2.uploader.upload(thubnail, {
-          folder: "courses",
-        });
+        const data = req.body;
+        const thubnail = data.thubnail;
+        if (thubnail) {
+            const myCloud = await cloudinary.v2.uploader.upload(thubnail, {
+                folder: "courses",
+            });
 
-        data.thubnail = {
-          public_id: myCloud.public_id,
-          url: myCloud.secure_url,
-        };
-      }
-      createCourse(data, res, next);
+            data.thubnail = {
+                public_id: myCloud.public_id,
+                url: myCloud.secure_url,
+            };
+        }
+        createCourse(data, res, next);
     } catch (error: any) {
-      return next(new ErrorHandler(error.message, 500));
+        return next(new ErrorHandler(error.message, 500));
     }
-  })
+})
 
 
 // edit course
 export const editCourse = CatchAsyncError(
     async (req: Request, res: Response, next: NextFunction) => {
         try {
-            const data = req.body;
+            console.log("update course api");
+
+            const { data } = req.body;
 
             const thubnail = data.thubnail;
 
             const courseId = req.params.id;
+            console.log(courseId);
 
             const courseData = await courseModel.findById(courseId) as any;
 
@@ -67,12 +70,11 @@ export const editCourse = CatchAsyncError(
                     url: courseData?.thubnail.url,
                 };
             }
+            console.log("this is data", data);
 
-            const course = await courseModel.findByIdAndUpdate(courseId,{$set: data},{ new: true }
-            );
-            console.log(course);
-            
-            await redis.set(courseId, JSON.stringify(course)); // update course in redis
+            const course = await courseModel.findByIdAndUpdate(courseId, { $set: data }, { new: true });
+            console.log("this is course data", course);
+
             res.status(201).json({
                 success: true,
                 course,
@@ -88,28 +90,12 @@ export const getSingleCourse = CatchAsyncError(async (req: Request, res: Respons
     try {
 
         const courseId = req.params.id
-
-        const isCacheExist = await redis.get(courseId)
-
-        if (isCacheExist) {
-            const course = JSON.parse(isCacheExist)
-            res.status(200).json({
-                success: true,
-                course
-            })
-        } else {
-            const course = await courseModel.findById(req.params.id).select("-courseData.videoUrl -courseData.suggeestion -courseData.questions -courseData.links")
-            await redis.set(courseId, JSON.stringify(course), "EX", 604800)
-            res.status(200).json({
-                success: true,
-                message: "find course data by id",
-                course
-            })
-        }
-
-
-
-
+        const course = await courseModel.findById(req.params.id).select("-courseData.videoUrl -courseData.suggeestion -courseData.questions -courseData.links")
+        res.status(200).json({
+            success: true,
+            message: "find course data by id",
+            course
+        })
 
     } catch (error: any) {
         console.log(error.message);
@@ -122,26 +108,14 @@ export const getSingleCourse = CatchAsyncError(async (req: Request, res: Respons
 export const getAllCourse = CatchAsyncError(async (req: Request, res: Response, next: NextFunction) => {
     try {
 
-        const isCacheExist = await redis.get("allCourses")
+        const course = await courseModel.find().select("-courseData.videoUrl -courseData.suggeestion -courseData.questions -courseData.links")
 
-        if (isCacheExist) {
-            const course = JSON.parse(isCacheExist)
-            res.status(200).json({
-                success: true,
-                course
-            })
-        } else {
+        res.status(200).json({
+            success: true,
+            message: "All course data",
+            course
+        })
 
-            const course = await courseModel.find().select("-courseData.videoUrl -courseData.suggeestion -courseData.questions -courseData.links")
-            await redis.set("allCourses", JSON.stringify(course))
-
-            res.status(200).json({
-                success: true,
-                message: "All course data",
-                course
-            })
-
-        }
 
     } catch (error: any) {
         console.log(error.message);

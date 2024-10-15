@@ -43,7 +43,7 @@ export const createOrder = CatchAsyncError(async (req: Request, res: Response, n
         }        
         const maildata = {
             order: {
-                _id :course?._id.toString(),
+                _id :course?.id.toString(),
                 name: course.name,
                 price: course.price,
                 date: new Date().toLocaleDateString("en-US", { year: "numeric", month: "long", day: "numeric" })
@@ -69,11 +69,11 @@ export const createOrder = CatchAsyncError(async (req: Request, res: Response, n
 
         user?.courses.push(course?._id)
 
-        console.log(course.purchased);
-        course.purchased  ? course.purchased += 1: course.purchased
-        console.log(course.purchased);
-
-        await user.save()
+        console.log(course?.purchased);
+        course?.purchased  ? course.purchased += 1: course?.purchased
+        await course.save()
+        console.log(course?.purchased);
+        await user?.save()
 
         await notificationModel.create({
             user: user?._id,
@@ -81,7 +81,7 @@ export const createOrder = CatchAsyncError(async (req: Request, res: Response, n
             message: `You have new order from ${course.name}`
         })
 
-        newOrder(data, res, next)
+        newOrder(data.data, res, next)
 
 
     } catch (error: any) {
