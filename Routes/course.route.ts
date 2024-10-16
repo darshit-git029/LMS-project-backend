@@ -11,7 +11,7 @@ courseRouter.post("/create/course",updateAccessToken,isAuthenticate,authoraiseRo
 
 courseRouter.put("/edit/course/:id",updateAccessToken,isAuthenticate,authoraiseRole("admin"),editCourse)
 
-courseRouter.get('/get/course/:id',getSingleCourse)
+courseRouter.get("/get/course/:id",getSingleCourse)
 
 courseRouter.get('/get/all/course',getAllCourse)
 

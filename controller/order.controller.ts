@@ -13,14 +13,25 @@ import { NextFunction, Request, Response } from "express";
 import { IUser } from "../model/user.model";
 import { getAllOrderservice, newOrder } from "../services/order.service";
 import { log } from "console";
+import { redis } from "../Utils/redis";
 dotenv.config()
-
+// import stripe from "stripe"
+const stripe = require("stripe")(process.env.PUBLICK_SCERET_KEY)
 
 export const createOrder = CatchAsyncError(async (req: Request, res: Response, next: NextFunction) => {
     try {
         
         console.log("....order/\.....")
         const { courseId, payment_info } = req.body as IOrder
+        if("id" in payment_info){
+            const paymentIntentsId = payment_info.id
+            const paymentIntent = await stripe.paymentIntents.retrieve(
+                paymentIntentsId
+            )
+            if(paymentIntent.status !== "succeeded"){
+                return next(new ErrorHandler("Payment is not authorize",400))
+            }
+        }
         
         const user = await usermodel.findById(req.user?._id)
         
@@ -70,10 +81,12 @@ export const createOrder = CatchAsyncError(async (req: Request, res: Response, n
         user?.courses.push(course?._id)
 
         console.log(course?.purchased);
-        course?.purchased  ? course.purchased += 1: course?.purchased
+        course?.purchased  ?( course.purchased += 1 ) :  course?.purchased
         await course.save()
         console.log(course?.purchased);
         await user?.save()
+
+        await redis.set(req.user?._id,JSON.stringify(user))
 
         await notificationModel.create({
             user: user?._id,
@@ -97,6 +110,40 @@ export const getAllOrderAdmin = CatchAsyncError(async(req:Request,res:Response,n
     try {
         getAllOrderservice(req,res,next)
 
+    } catch (error:any) {
+        return next(new ErrorHandler(error.message,400))
+    }
+})
+
+
+//send stripe publish key
+
+export const publishStripeKey =  CatchAsyncError(async(req:Request,res:Response) => {
+    res.status(200).json({
+        publishableKey : process.env.PUBLISH_KEY
+    })
+})
+
+// update payment status -- admin
+
+export const newPayment = CatchAsyncError(async(req:Request,res:Response,next:NextFunction) => {
+    try {
+        const myPayment = await stripe.paymentIntents.create({
+            amount:req.body.amount,
+            currency:   "USD",
+            metadata:{
+                company:"E-learning"
+            },
+            automatic_payment_methods:{
+                enabled:true
+            }
+        })
+        
+        res.status(200).json({
+            success:true,
+            client_secret:myPayment.client_secret
+        })
+        
     } catch (error:any) {
         return next(new ErrorHandler(error.message,400))
     }
