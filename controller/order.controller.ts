@@ -24,14 +24,16 @@ export const createOrder = CatchAsyncError(async (req: Request, res: Response, n
         console.log("....order/\.....")
         const { courseId, payment_info } = req.body as IOrder
         if("id" in payment_info){
-            const paymentIntentsId = payment_info.id
+            const paymentIntentId = payment_info.id
             const paymentIntent = await stripe.paymentIntents.retrieve(
-                paymentIntentsId
+                paymentIntentId
             )
             if(paymentIntent.status !== "succeeded"){
                 return next(new ErrorHandler("Payment is not authorize",400))
             }
         }
+        console.log(payment_info);
+        
         
         const user = await usermodel.findById(req.user?._id)
         
@@ -94,12 +96,11 @@ export const createOrder = CatchAsyncError(async (req: Request, res: Response, n
             message: `You have new order from ${course.name}`
         })
 
-        newOrder(data.data, res, next)
+        newOrder(data, res, next)
 
 
     } catch (error: any) {
-        console.log(error);
-        
+        console.log(error.message);
         return next(new ErrorHandler(error.message, 4000))
     }
 })
@@ -145,6 +146,8 @@ export const newPayment = CatchAsyncError(async(req:Request,res:Response,next:Ne
         })
         
     } catch (error:any) {
+        console.log(error);
+        
         return next(new ErrorHandler(error.message,400))
     }
 })

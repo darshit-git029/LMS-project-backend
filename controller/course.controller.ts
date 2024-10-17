@@ -108,7 +108,11 @@ export const getSingleCourse = CatchAsyncError(async (req: Request, res: Respons
 export const getAllCourse = CatchAsyncError(async (req: Request, res: Response, next: NextFunction) => {
     try {
 
-        const course = await courseModel.find().select("-courseData.videoUrl -courseData.suggeestion -courseData.questions -courseData.links")
+        const course = await courseModel.find().select("-courseData.videoUrl -courseData.suggeestion -courseData.questions -courseData.links").populate({
+            path:"reviews.user",
+            model:"User",
+            select:"_id avatar name email createdAt"
+        })
 
         res.status(200).json({
             success: true,
@@ -138,7 +142,11 @@ export const getCourseByUSer = CatchAsyncError(async (req: Request, res: Respons
             return next(new ErrorHandler("You are not eligible to access this course", 400))
         }
 
-        const course = await courseModel.findById(courseId)
+        const course = await courseModel.findById(courseId).populate({
+            path:"courseData.questions.user",
+            model:"User",
+            select:"_id name"
+        }).exec()
         const content = course?.courseData
 
         res.status(200).json({
@@ -164,7 +172,7 @@ export const addQuestion = CatchAsyncError(async (req: Request, res: Response, n
     console.log("......Add Question is course.......");
     try {
         const { question, courseId, contentId }: IAddQuestionData = req.body
-        const course = await courseModel.findById(courseId)
+        let course = await courseModel.findById(courseId)
 
         if (!mongoose.Types.ObjectId.isValid(contentId)) {
             return next(new ErrorHandler("Invalid content id.", 400))
@@ -176,7 +184,7 @@ export const addQuestion = CatchAsyncError(async (req: Request, res: Response, n
         }
 
         const newQuestion: any = {
-            user: req.user,
+            user: req.user._id,
             question,
             questionReplies: []
         }
@@ -184,12 +192,19 @@ export const addQuestion = CatchAsyncError(async (req: Request, res: Response, n
         courseContent.questions.push(newQuestion)
 
         await NotificationModel.create({
-            user: req.user?._id,
+            user: req.user,
             title: "New Qoestion",
             message: `You have new question from ${courseContent.title}`
         })
 
         await course?.save()
+
+        course = await courseModel.findById(courseId).populate({
+            path:"courseData.questions.user",
+            model:"User",
+            select:"_id name createdAt"
+        }).exec()
+
 
         res.status(200).json({
             success: true,
@@ -309,11 +324,11 @@ export const addReview = CatchAsyncError(async (req: Request, res: Response, nex
             return next(new ErrorHandler("You are not eligible to access this", 400))
         }
 
-        const course = await courseModel.findById(courseId)
+        let course = await courseModel.findById(courseId)
         const { review, rating } = req.body as IAddreview
 
         const newReview: any = {
-            user: req.user,
+            user: req.user._id,
             comment: review,
             rating: rating
         }
@@ -329,6 +344,13 @@ export const addReview = CatchAsyncError(async (req: Request, res: Response, nex
         }
 
         await course?.save()
+
+        course = await courseModel.findById(courseId).populate({
+            path:"reviews.user",
+            model:"User",
+            select:"_id avatar name email createdAt"
+        }).exec()
+
 
         const notification = {
             titleL: "New Review",

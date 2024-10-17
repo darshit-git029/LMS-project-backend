@@ -6,14 +6,14 @@ dotenv.config()
 
 
 interface IComment extends Document {
-    user: IUser
+    user: object
     question: string
     questionReplies: IComment[]
 
 }
 
 interface IReview extends Document {
-    user: IUser
+    user: object
     rating: number
     comment: string
     commentReplies: IComment[]
@@ -57,7 +57,7 @@ interface ICourse extends Document {
 
 
 const reviewSchema = new Schema<IReview>({
-    user: Object,
+    user:{type:mongoose.Types.ObjectId},
     rating: {
         type: Number,
         default: 0
@@ -73,7 +73,7 @@ const linkSchema = new Schema<ILink>({
 })
 
 const commentSchema = new Schema<IComment>({
-    user: Object,
+    user: {type:mongoose.Schema.Types.ObjectId},
     question: String,
     questionReplies: [Object]
 })
