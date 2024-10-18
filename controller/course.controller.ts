@@ -11,6 +11,7 @@ import ejs from "ejs"
 import sendMail from "../Utils/SendMail";
 import NotificationModel from "../model/notification.model";
 import axios from "axios";
+import { create } from "domain";
 
 
 //create new course
@@ -90,7 +91,11 @@ export const getSingleCourse = CatchAsyncError(async (req: Request, res: Respons
     try {
 
         const courseId = req.params.id
-        const course = await courseModel.findById(req.params.id).select("-courseData.videoUrl -courseData.suggeestion -courseData.questions -courseData.links")
+        const course = await courseModel.findById(req.params.id).select("-courseData.videoUrl -courseData.suggeestion -courseData.questions -courseData.links").populate({
+            path:"reviews.user",
+            model:"User",
+            select:"_id avatar name email createdAt"
+        })
         res.status(200).json({
             success: true,
             message: "find course data by id",
@@ -112,7 +117,7 @@ export const getAllCourse = CatchAsyncError(async (req: Request, res: Response, 
             path:"reviews.user",
             model:"User",
             select:"_id avatar name email createdAt"
-        })
+        })  
 
         res.status(200).json({
             success: true,
@@ -145,13 +150,16 @@ export const getCourseByUSer = CatchAsyncError(async (req: Request, res: Respons
         const course = await courseModel.findById(courseId).populate({
             path:"courseData.questions.user",
             model:"User",
-            select:"_id name"
+            select:"_id avatar name createdAt"
         }).exec()
-        const content = course?.courseData
+        
+        const content = course?.courseData 
+        const time = {createdAt : new Date().toISOString()}
 
         res.status(200).json({
             success: true,
-            content
+            content,
+            time,
         })
 
     } catch (error: any) {
@@ -186,13 +194,15 @@ export const addQuestion = CatchAsyncError(async (req: Request, res: Response, n
         const newQuestion: any = {
             user: req.user._id,
             question,
-            questionReplies: []
+            questionReplies: [],
+            createdAt: new Date().toISOString(),
+            updatedAt : new Date().toISOString(),
         }
-
+        
         courseContent.questions.push(newQuestion)
 
         await NotificationModel.create({
-            user: req.user,
+            user: req.user._id,
             title: "New Qoestion",
             message: `You have new question from ${courseContent.title}`
         })
@@ -202,13 +212,13 @@ export const addQuestion = CatchAsyncError(async (req: Request, res: Response, n
         course = await courseModel.findById(courseId).populate({
             path:"courseData.questions.user",
             model:"User",
-            select:"_id name createdAt"
+            select:"_id avatar name createdAt"
         }).exec()
 
 
         res.status(200).json({
             success: true,
-            course
+            course,
         })
 
 
@@ -234,7 +244,7 @@ export const addAnswer = CatchAsyncError(async (req: Request, res: Response, nex
     try {
         const { answer, courseId, contentId, questionId }: IAddAnswerData = req.body
 
-        const course = await courseModel.findById(courseId)
+        let course = await courseModel.findById(courseId)
 
         if (!mongoose.Types.ObjectId.isValid(contentId)) {
             return next(new ErrorHandler("Invalid content id.", 400))
@@ -255,7 +265,9 @@ export const addAnswer = CatchAsyncError(async (req: Request, res: Response, nex
 
         const newAnswer: any = {
             user: req.user,
-            answer
+            answer,
+            createdAt: new Date().toISOString(),
+            updatedAt : new Date().toISOString()
         }
 
         question.questionReplies.push(newAnswer)
@@ -263,33 +275,22 @@ export const addAnswer = CatchAsyncError(async (req: Request, res: Response, nex
 
         await course?.save()
 
+        course = await courseModel.findById(courseId).populate({
+            path:"courseData.questions.questionReplies.user",
+            model:"User",
+            select:"_id avatar name email createdAt"
+        }).exec()
+
         if (req.user?._id === question.user._id) {
             //create notification
             await NotificationModel.create({
                 user: req.user?._id,
                 title: "New Qoestion Replay Recevied",
-                message: `You have new question reply in ${courseContent.title}`
+                message: `You have new question reply in ${courseContent.title}`,
+                email:`from ${user.email}`
             })
         } else {
-            const data = {
-                name: question.user.name,
-                title: courseContent.title
-            }
-
-            const html = await ejs.renderFile(path.join(__dirname, "../Mails/question-replies.ejs"), data)
-            try {
-                await sendMail({
-                    email: question.user.email,
-                    subject: "Question Relpy ",
-                    template: "question-replies.ejs",
-                    data
-                })
-
-            } catch (error: any) {
-                console.log(error.message);
-                return (new ErrorHandler(error.message, 400))
-            }
-
+            
         }
 
         res.status(200).json({
@@ -330,7 +331,8 @@ export const addReview = CatchAsyncError(async (req: Request, res: Response, nex
         const newReview: any = {
             user: req.user._id,
             comment: review,
-            rating: rating
+            rating: rating,
+            createdAt:new Date().toISOString()
         }
         course?.reviews?.push(newReview)
 
@@ -350,7 +352,7 @@ export const addReview = CatchAsyncError(async (req: Request, res: Response, nex
             model:"User",
             select:"_id avatar name email createdAt"
         }).exec()
-
+            
 
         const notification = {
             titleL: "New Review",
@@ -397,7 +399,9 @@ export const addReplyToReview = CatchAsyncError(async (req: Request, res: Respon
         }
         const replyData: any = {
             user: req.user,
-            comment
+            comment,
+            createdAt: new Date().toISOString(),
+            updatedAt : new Date().toISOString()
         }
 
         if (!review.commentReplies) {

@@ -1,4 +1,4 @@
-import mongoose, { Document, Model, model, Schema } from "mongoose";
+import mongoose, { Date, Document, Model, model, Schema } from "mongoose";
 import dotenv from "dotenv"
 import { title } from "process";
 import { IUser } from "./user.model";
@@ -9,7 +9,6 @@ interface IComment extends Document {
     user: object
     question: string
     questionReplies: IComment[]
-
 }
 
 interface IReview extends Document {
@@ -64,7 +63,6 @@ const reviewSchema = new Schema<IReview>({
     },
     comment: String,
     commentReplies:Object
-
 })
 
 const linkSchema = new Schema<ILink>({
@@ -73,9 +71,10 @@ const linkSchema = new Schema<ILink>({
 })
 
 const commentSchema = new Schema<IComment>({
-    user: {type:mongoose.Schema.Types.ObjectId},
+    user: {type:mongoose.Types.ObjectId},
     question: String,
-    questionReplies: [Object]
+    questionReplies: [Object],
+
 })
 
 const courseDataSchema = new Schema<ICourseData>({
