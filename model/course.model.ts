@@ -36,7 +36,7 @@ interface ICourseData extends Document {
     questions: IComment[]
 }
 
-interface ICourse extends Document {
+export interface ICourse extends Document {
     name: string
     description: string
     category:string
@@ -51,7 +51,7 @@ interface ICourse extends Document {
     reviews: IReview[]
     courseData: ICourseData[]
     rating?: number
-    purchased?: number
+    purchased: number
 }
 
 

@@ -5,9 +5,18 @@ dotenv.config()
 const redisClient = () => {
     if(process.env.REDIS_URL){
         console.log(`Redis Connected `)
-        return process.env.REDIS_URL
+        const redis = new Redis(process.env.REDIS_URL,{
+            maxRetriesPerRequest:null,
+            retryStrategy: (times) => {
+                const delay = Math.min(times * 50, 2000);
+                return delay;
+              }
+
+        })  
+        return redis
+
     }
     throw new Error ("Redis Connection failed")
 }
 
-export const redis = new Redis(redisClient())
+export const redis =  redisClient()

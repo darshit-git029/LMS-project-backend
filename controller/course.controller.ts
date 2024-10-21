@@ -353,13 +353,12 @@ export const addReview = CatchAsyncError(async (req: Request, res: Response, nex
             select:"_id avatar name email createdAt"
         }).exec()
             
-
-        const notification = {
-            titleL: "New Review",
-            message: `${req.user.name} has given a review in ${course?.name} `
-        }
-
         //create notification
+        await NotificationModel.create({
+            user: req.user?._id,
+            title: "New Review Recevied",
+            message: `You have new Review in ${course?.name}`,
+        })
 
         res.status(200).json({
             success: true,
