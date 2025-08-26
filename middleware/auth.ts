@@ -2,8 +2,8 @@ import { Request, Response, NextFunction } from "express";
 import { CatchAsyncError } from "./catchAsyncError";
 import ErrorHandler from "../Utils/ErrorHandler";
 import jwt, { JwtPayload } from "jsonwebtoken";
-import { redis } from "../Utils/redis";
 import { updateAccessToken } from "../controller/user.controller";
+import usermodel from "../model/user.model";
 
 // authenticated user
 export const isAuthenticate = CatchAsyncError(async (req: Request, res: Response, next: NextFunction) => {
@@ -27,13 +27,14 @@ export const isAuthenticate = CatchAsyncError(async (req: Request, res: Response
       return next(error);
     }
   } else {
-    const user = await redis.get(decoded.id);
+    const user = await usermodel.findById(decoded.id);
 
     if (!user) {
       return next(new ErrorHandler("Please login to access this resource", 400));
     }
 
-    req.user = JSON.parse(user);
+    // convert mongoose document to plain object before assigning to req.user
+    req.user = (user as any).toObject ? (user as any).toObject() : (user as any);
 
     next();
   }

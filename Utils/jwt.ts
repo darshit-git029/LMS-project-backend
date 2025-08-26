@@ -1,14 +1,13 @@
 import { Response } from "express";
 import dotenv from "dotenv";
 import { IUser } from "../model/user.model";
-import { redis } from "./redis";
 dotenv.config();
 
 interface ITokenOption {
   expires: Date;
-  maxAge: Number;
+  maxAge: number;
   httpOnly: boolean;
-  sameSite: "lax" | "strict" | "none" | undefined;
+  sameSite?: boolean | "lax" | "strict" | "none";
   secure?: boolean;
 }
 
@@ -35,7 +34,6 @@ export const sendToken = (user: IUser, statusCode: number, res: Response) => {
   const refreshToken = user.SignRefreshToken();
 
   //upload session in redis
-  redis.set(user._id, JSON.stringify(user) as any);
 
   res.cookie("access_token", accessToken, accessTokenOption);
   res.cookie("refresh_token", refreshToken, refreshTokenOption);

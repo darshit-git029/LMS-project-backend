@@ -6,11 +6,10 @@ import jwt, { JwtPayload, Secret } from "jsonwebtoken";
 import dotenv from "dotenv";
 import ejs from "ejs";
 import path from "path";
-import sendMail from "../Utils/SendMail";
 import { accessTokenOption, refreshTokenOption, sendToken } from "../Utils/jwt";
-import { redis } from "../Utils/redis";
 import { getAllUserService, getUserById, updateUserRoleService } from "../services/user.service";
 import cloudeinary from "cloudinary";
+import sendMail from "../Utils/SendMail";
 dotenv.config();
 
 //register user
@@ -146,15 +145,13 @@ export const userLogin = CatchAsyncError(async (req: Request, res: Response, nex
 
 //Logout User
 
-export const userLogout = CatchAsyncError(async (req: Response, res: Response, next: NextFunction) => {
+export const userLogout = CatchAsyncError(async (req: Request, res: Response, next: NextFunction) => {
   try {
     console.log("Logout query run");
 
     res.cookie("access_token", "", { maxAge: 1 });
     res.cookie("refresh_token", "", { maxAge: 1 });
     const userId = req.user?._id;
-
-    redis.del(userId);
 
     res.status(200).json({
       success: true,
@@ -178,20 +175,20 @@ export const updateAccessToken = CatchAsyncError(async (req: Request, res: Respo
       return next(new ErrorHandler(message, 400));
     }
 
-    const session = await redis.get(decoded.id as string);
+    const session = await usermodel.findById(decoded.id);
     if (!session) {
       return next(new ErrorHandler("please login to access this resources", 400));
     }
 
-    const user = JSON.parse(session);
+    // convert mongoose document to plain object; avoid using JSON.parse on an object
+    const user = (session as any).toObject ? (session as any).toObject() : (session as any);
 
     const accessToken = jwt.sign({ id: user?._id }, process.env.ACCESS_TOKEN as string, { expiresIn: "15m" });
     const refreshToken = jwt.sign({ id: user?._id }, process.env.REFRESH_TOKEN as string, { expiresIn: "3d" });
     req.user = user;
-    res.cookie("access_token", accessToken, accessTokenOption);
-    res.cookie("refresh_token", refreshToken, refreshTokenOption);
+    res.cookie("access_token", accessToken, accessTokenOption as any);
+    res.cookie("refresh_token", refreshToken, refreshTokenOption as any);
 
-    await redis.set(user._id, JSON.stringify(user), "EX", 604800); //7 days
     next();
   } catch (error: any) {
     return next(new ErrorHandler(error.message, 400));
@@ -203,9 +200,12 @@ export const updateAccessToken = CatchAsyncError(async (req: Request, res: Respo
 export const getUserInfo = CatchAsyncError(async (req: Request, res: Response, next: NextFunction) => {
   try {
     const userId = req.user?._id;
-    getUserById(userId, res);
+    console.log(userId);
+
+    const user = getUserById(userId, res);
+    console.log(user);
   } catch (error: any) {
-    return next(new ErrorHandler("thuis is error", 400));
+    return next(new ErrorHandler("this error", 400));
   }
 });
 
@@ -252,8 +252,6 @@ export const updateUser = CatchAsyncError(async (req: Request, res: Response, ne
 
     await user?.save();
 
-    await redis.set(userId, JSON.stringify(user));
-
     res.status(200).json({
       success: true,
       message: "User updated successfully",
@@ -286,8 +284,6 @@ export const updatePassword = CatchAsyncError(async (req: Request, res: Response
     }
     user.password = newPassword;
     await user?.save();
-
-    await redis.set(req.user?._id, JSON.stringify(user));
 
     res.status(200).json({
       success: true,
@@ -333,7 +329,6 @@ export const updateProfilePhoto = CatchAsyncError(async (req: Request, res: Resp
       }
     }
     await user?.save();
-    await redis.set(userId, JSON.stringify(user));
     res.status(200).json({
       success: true,
       message: "Profile picture updated successfully.",
@@ -357,14 +352,14 @@ export const getAllUserAdmin = CatchAsyncError(async (req: Request, res: Respons
 });
 
 //update user role -- admin
-
 export const updateUserRole = CatchAsyncError(async (req: Request, res: Response, next: NextFunction) => {
   try {
     const { email, role } = req.body;
     const isUserExist = await usermodel.findOne({ email });
     if (isUserExist) {
-      const id = isUserExist._id;
-      updateUserRoleService(res, id, role);
+      const id = isUserExist.id;
+      // call service with (res, id, role) to match the service signature and types
+      await updateUserRoleService(id, role, res);
     } else {
       res.status(400).json({
         success: false,
@@ -375,7 +370,6 @@ export const updateUserRole = CatchAsyncError(async (req: Request, res: Response
     return next(new ErrorHandler(error.message, 400));
   }
 });
-
 //delete user -- admin
 
 export const deleteUser = CatchAsyncError(async (req: Request, res: Response, next: NextFunction) => {
@@ -389,13 +383,11 @@ export const deleteUser = CatchAsyncError(async (req: Request, res: Response, ne
 
     await user.deleteOne({ id });
 
-    await redis.del(id);
-
     res.status(200).json({
       success: true,
       message: "User deleted successfully",
     });
   } catch (error: any) {
-    return next(new ErrorHandler(error.Message, 400));
+    return next(new ErrorHandler(error.message, 400));
   }
 });

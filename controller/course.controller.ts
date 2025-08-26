@@ -4,10 +4,18 @@ import ErrorHandler from "../Utils/ErrorHandler";
 import cloudinary from "cloudinary";
 import { createCourse, getAllCourseService } from "../services/course.service";
 import courseModel from "../model/course.model";
-import { redis } from "../Utils/redis";
 import mongoose from "mongoose";
 import NotificationModel from "../model/notification.model";
 import axios from "axios";
+
+// Extend Express Request type to include 'user'
+declare global {
+  namespace Express {
+    interface Request {
+      user?: any;
+    }
+  }
+}
 
 //create new course
 export const uploadCourse = CatchAsyncError(async (req: Request, res: Response, next: NextFunction) => {
@@ -272,13 +280,17 @@ export const addAnswer = CatchAsyncError(async (req: Request, res: Response, nex
       })
       .exec();
 
-    if (req.user?._id === question.user._id) {
+    if (
+      (req.user as any)?._id &&
+      (question.user as any)?._id &&
+      (req.user as any)._id.toString() === (question.user as any)._id.toString()
+    ) {
       //create notification
       await NotificationModel.create({
-        user: req.user?._id,
+        user: (req.user as any)._id,
         title: "New Qoestion Replay Recevied",
         message: `You have new question reply in ${courseContent.title}`,
-        email: `from ${user.email}`,
+        email: `from ${(req.user as any).email}`,
       });
     } else {
     }
@@ -308,61 +320,9 @@ export const addReview = CatchAsyncError(async (req: Request, res: Response, nex
     const userCourseList = req.user?.courses;
     const courseId = req.params.id;
 
-<<<<<<< HEAD
     const ExistCourseId = userCourseList?.find((course: any) => courseId.toString() === courseId);
     if (!ExistCourseId) {
       return next(new ErrorHandler("You are not eligible to access this", 400));
-=======
-        const ExistCourseId = userCourseList?.find((course: any) => courseId.toString() === courseId)
-        if (!ExistCourseId) {
-            return next(new ErrorHandler("You are not eligible to access this", 400))
-        }
-
-        let course = await courseModel.findById(courseId)
-        const { review, rating } = req.body as IAddreview
-
-        const newReview: any = {
-            user: req.user._id,
-            comment: review,
-            rating: rating,
-            createdAt:new Date().toISOString()
-        }
-        course?.reviews?.push(newReview)
-
-        let avg = 0
-        course?.reviews.forEach((rev: any) => {
-            avg += rev.rating
-        })
-
-        if (course) {
-            course.rating = avg / course.reviews.length //review/rating  
-        }
-
-        await course?.save()
-
-        course = await courseModel.findById(courseId).populate({
-            path:"reviews.user",
-            model:"User",
-            select:"_id avatar name email createdAt"
-        }).exec()
-            
-
-        const notification = {
-            titleL: "New Review",
-            message: `${req.user.name} has given a review in ${course?.name} `
-        }
-
-        //create notification
-
-        res.status(200).json({
-            success: true,
-            course
-        })
-
-    } catch (error: any) {
-        console.log(error.message);
-        return next(new ErrorHandler(error.message, 400))
->>>>>>> parent of 68e8279 ({UPDATE}: LMS-project update socket server for notification correcting the other controllers and model.)
     }
 
     let course = await courseModel.findById(courseId);
@@ -482,8 +442,6 @@ export const deleteCourse = CatchAsyncError(async (req: Request, res: Response, 
     }
 
     await course.deleteOne({ id });
-
-    await redis.del(id);
 
     res.status(200).json({
       success: true,

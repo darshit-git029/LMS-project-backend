@@ -35,7 +35,6 @@ interface ICourseData extends Document {
   questions: IComment[];
 }
 
-<<<<<<< HEAD
 export interface ICourse extends Document {
   name: string;
   description: string;
@@ -52,24 +51,6 @@ export interface ICourse extends Document {
   courseData: ICourseData[];
   rating?: number;
   purchased: number;
-=======
-interface ICourse extends Document {
-    name: string
-    description: string
-    category:string
-    price: number
-    estimatedPrice: number
-    thubnail: object
-    tags: string
-    level: string
-    demoUrl: string
-    benefits: { title: string }[]
-    perrequistites: { title: string }[]
-    reviews: IReview[]
-    courseData: ICourseData[]
-    rating?: number
-    purchased?: number
->>>>>>> parent of 68e8279 ({UPDATE}: LMS-project update socket server for notification correcting the other controllers and model.)
 }
 
 const reviewSchema = new Schema<IReview>({
